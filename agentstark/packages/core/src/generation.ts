@@ -209,34 +209,34 @@ export async function generateText({
     });
 
     //If verifiable inference is requested and adapter is provided, use it
-    if (verifiableInference && runtime.verifiableInferenceAdapter) {
-        console.log("I am inside loop");
+    // if (verifiableInference && runtime.verifiableInferenceAdapter) {
+    //     console.log("I am inside loop");
 
-        try {
-            console.log(
-                "verifiableInferenceOptions: ",
-                verifiableInferenceOptions
-            );
-            const result =
-                await runtime.verifiableInferenceAdapter.generateText(
-                    context,
-                    modelClass,
-                    verifiableInferenceOptions
-                );
-            console.log("result: ", result);
-            // Verify the proof
-            const isValid =
-                await runtime.verifiableInferenceAdapter.verifyProof(result);
-            if (!isValid) {
-                throw new Error("Failed to verify inference proof");
-            }
+    //     try {
+    //         console.log(
+    //             "verifiableInferenceOptions: ",
+    //             verifiableInferenceOptions
+    //         );
+    //         const result =
+    //             await runtime.verifiableInferenceAdapter.generateText(
+    //                 context,
+    //                 modelClass,
+    //                 verifiableInferenceOptions
+    //             );
+    //         console.log("result: ", result);
+    //         // Verify the proof
+    //         const isValid =
+    //             await runtime.verifiableInferenceAdapter.verifyProof(result);
+    //         if (!isValid) {
+    //             throw new Error("Failed to verify inference proof");
+    //         }
 
-            return result.text;
-        } catch (error) {
-            elizaLogger.error("Error in verifiable inference:", error);
-            throw error;
-        }
-    }
+    //         return result.text;
+    //     } catch (error) {
+    //         elizaLogger.error("Error in verifiable inference:", error);
+    //         throw error;
+    //     }
+    // }
 
     const provider = runtime.modelProvider;
     const endpoint =
