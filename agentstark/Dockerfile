@@ -2,8 +2,8 @@
 FROM node:23.3.0-slim AS builder
 
 # Install pnpm globally and install necessary build tools
-RUN npm install -g pnpm@9.15.1 
-RUN apt-get update && \
+RUN npm install -g pnpm@9.4.0 && \
+    apt-get update && \
     apt-get install -y git python3 make g++ && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
@@ -15,24 +15,25 @@ RUN ln -s /usr/bin/python3 /usr/bin/python
 WORKDIR /app
 
 # Copy package.json and other configuration files
-COPY package.json ./
-COPY pnpm-lock.yaml ./
-COPY tsconfig.json ./
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml .npmrc turbo.json ./
 
 # Copy the rest of the application code
-COPY ./src ./src
-COPY ./characters ./characters
-COPY ./.env ./
+COPY agent ./agent
+COPY packages ./packages
+COPY scripts ./scripts
+COPY characters ./characters
 
 # Install dependencies and build the project
-RUN pnpm i
-RUN pnpm build 
+RUN pnpm install \
+    && pnpm build-docker \
+    && pnpm prune --prod
+
 # Create a new stage for the final image
 FROM node:23.3.0-slim
 
 # Install runtime dependencies if needed
-RUN npm install -g pnpm@9.15.1
-RUN apt-get update && \
+RUN npm install -g pnpm@9.4.0 && \
+    apt-get update && \
     apt-get install -y git python3 && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
@@ -40,16 +41,15 @@ RUN apt-get update && \
 WORKDIR /app
 
 # Copy built artifacts and production dependencies from the builder stage
-COPY --from=builder /app/package.json /app/
-COPY --from=builder /app/node_modules /app/node_modules
-COPY --from=builder /app/src /app/src
-COPY --from=builder /app/characters /app/characters
-COPY --from=builder /app/.env /app/
-COPY --from=builder /app/dist /app/dist
-COPY --from=builder /app/tsconfig.json /app/
-COPY --from=builder /app/pnpm-lock.yaml /app/
+COPY --from=builder /app/package.json ./
+COPY --from=builder /app/pnpm-workspace.yaml ./
+COPY --from=builder /app/.npmrc ./
+COPY --from=builder /app/turbo.json ./
+COPY --from=builder /app/node_modules ./node_modules
+COPY --from=builder /app/agent ./agent
+COPY --from=builder /app/packages ./packages
+COPY --from=builder /app/scripts ./scripts
+COPY --from=builder /app/characters ./characters
 
-EXPOSE 3000
 # Set the command to run the application
-CMD ["pnpm", "start", "--non-interactive"]
-# CMD ["node", "dist/index.js"]
+CMD ["pnpm", "start"]
